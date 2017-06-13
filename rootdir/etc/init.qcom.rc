@@ -47,7 +47,7 @@ on init
 
 on fs
     mount_all fstab.qcom
-    setprop ro.product.name jgedlteue
+    setprop ro.product.name jactivelte
 
 on post-fs-data
     # Create directories for tombstone
@@ -69,6 +69,9 @@ on post-fs-data
     # Create directory for CNE
     mkdir /data/connectivity 0771 system system
 
+	# Create folder for mm-qcamera-daemon
+    mkdir /data/misc/camera 0770 camera camera
+	
     # Create directory for H2K
     mkdir /data/misc/radio/hatp 0775 radio system
     chmod 0644 /efs/h2k.dat
@@ -158,10 +161,10 @@ on boot
     chmod 0660 /proc/bluetooth/sleep/btwrite
     chmod 0660 /sys/class/rfkill/rfkill0/state
     chmod 0660 /dev/ttyHS0
-    chown bluetooth net_bt_stack /proc/bluetooth/sleep/lpm
-    chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
-    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
-    chown bluetooth net_bt_stack /dev/ttyHS0
+    chown bluetooth bluetooth /proc/bluetooth/sleep/lpm
+    chown bluetooth bluetooth /proc/bluetooth/sleep/btwrite
+    chown bluetooth net_bt /sys/class/rfkill/rfkill0/state
+    chown bluetooth net_bt /dev/ttyHS0
 
     # Create QMUX daemon socket area
     mkdir /dev/socket/qmux_audio 2770 media audio
@@ -442,6 +445,15 @@ service qmuxd /system/bin/qmuxd
 service netmgrd /system/bin/netmgrd
     class main
 
+# Start ril-daemon
+service ril-daemon /system/bin/rild
+    class main
+    socket rild stream 660 root radio
+    socket sap_uim_socket1 stream 660 bluetooth bluetooth
+    socket rild-debug stream 660 radio system
+    user root
+    group radio cache inet misc audio log readproc wakelock qcom_diag
+
 # Adjust socket buffer to enlarge TCP receive window for high bandwidth
 # but only if ro.data.large_tcp_window_size property is set.
 on property:ro.data.large_tcp_window_size=true
@@ -475,7 +487,7 @@ service wpa_supplicant /system/bin/wpa_supplicant -g@android:wpa_wlan0 \
     oneshot
 
 service macloader /system/bin/macloader
-    class main
+    class late_start
     oneshot
     seclabel u:r:macloader_exec:s0
 
@@ -491,6 +503,9 @@ service thermal-engine /system/bin/thermal-engine
     class main
     user root
     group root
+	
+on property:wlan.driver.status=ok
+    start macloader
 
 # Disable boot timeout for external modems
 on property:persist.sys.mdm.timeout_disable=1
