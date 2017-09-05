@@ -50,7 +50,7 @@ BOARD_CUSTOM_BOOTIMG_MK := hardware/samsung/mkbootimg.mk
 # Audio
 BOARD_HAVE_SAMSUNG_CSDCLIENT := true
 BOARD_USES_ALSA_AUDIO := true
-USE_CUSTOM_AUDIO_POLICY := 1
+USE_CUSTOM_AUDIO_POLICY := 0
 
 
 # Bluetooth
